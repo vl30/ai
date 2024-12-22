@@ -1,129 +1,596 @@
-\<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
-    <link rel="stylesheet" href="styles.css">
+    <title>Clara AI - Enhanced Chat</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --gradient-1: #FF3CAC;
+            --gradient-2: #784BA0;
+            --gradient-3: #2B86C5;
+            --bubble-user: linear-gradient(135deg, #FF3CAC, #784BA0);
+            --bubble-ai: linear-gradient(135deg, #E3FDF5, #FFE6FA);
+        }
+
+        body {
+            background: linear-gradient(-45deg, var(--gradient-1), var(--gradient-2), var(--gradient-3));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Floating Particles Background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 8s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 900px;
+            height: 85vh;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideIn 0.5s ease, glow 3s infinite alternate;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 20px rgba(255, 60, 172, 0.3);
+            }
+            to {
+                box-shadow: 0 0 30px rgba(43, 134, 197, 0.5);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(50px) scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .chat-header {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .logo-container {
+            position: relative;
+            width: 50px;
+            height: 50px;
+        }
+
+        .logo {
+            width: 100%;
+            height: 100%;
+            background: var(--bubble-user);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        .logo::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: 50%;
+            z-index: -1;
+            animation: ripple 2s infinite;
+        }
+
+        @keyframes ripple {
+            from {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            to {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .logo i {
+            color: white;
+            font-size: 1.8rem;
+            animation: wave 2s infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+
+        .chat-header h1 {
+            background: linear-gradient(45deg, var(--gradient-1), var(--gradient-3));
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            scroll-behavior: smooth;
+            background: 
+                radial-gradient(circle at top right, rgba(255, 60, 172, 0.1) 0%, transparent 60%),
+                radial-gradient(circle at bottom left, rgba(43, 134, 197, 0.1) 0%, transparent 60%);
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeSlideIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 1rem 1.5rem;
+            border-radius: 20px;
+            position: relative;
+            animation: bubbleIn 0.4s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes bubbleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .user-message {
+            margin-left: auto;
+        }
+
+        .user-message .message-bubble {
+            background: var(--bubble-user);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .ai-message {
+            margin-right: auto;
+        }
+
+        .ai-message .message-bubble {
+            background: var(--bubble-ai);
+            color: #333;
+            border-bottom-left-radius: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 1.5rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--gradient-2);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: bounce 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .chat-input {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            gap: 1rem;
+            border-top: 2px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .chat-input::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(to right, var(--gradient-1), var(--gradient-3));
+            opacity: 0.5;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: var(--gradient-2);
+            box-shadow: 0 0 15px rgba(120, 75, 160, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .chat-input button {
+            background: var(--bubble-user);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-input button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: translateX(-100%);
+        }
+
+        .chat-input button:hover::before {
+            transform: translateX(100%);
+            transition: transform 0.6s ease;
+        }
+
+        .chat-input button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(120, 75, 160, 0.4);
+        }
+
+        .chat-input button:active {
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .chat-header {
+                padding: 1rem;
+            }
+
+            .chat-input {
+                padding: 1rem;
+            }
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--gradient-1), var(--gradient-2));
+            border-radius: 5px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(var(--gradient-2), var(--gradient-3));
+        }
+
+        /* Success Animation */
+        @keyframes success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Error Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="header-bg"></div>
-        <div class="container">
-            <img src="assets/thumb.png" alt="Profile Picture" class="profile-img">
-            <h1 class="name" data-aos="zoom-in">Naufal Dzakwan Az Zuhdi</h1>
-            <p class="title" data-aos="fade-up">pelajar</p>
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="logo-container">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                </div>
+            </div>
+            <h1>Clara AI Assistant</h1>
         </div>
-    </header>
-
-    <section class="section">
-        <div class="container">
-            <div class="about" data-aos="fade-up">
-                <h2>Tentang Saya</h2>
-                <p>bukan siapa siapa yang hebat saya adalah seorang pelajar di smkn 2 Bandar lampung dan saya menyukai coding</p>
-            </div>
-
-            <section class="gallery-section">
-                <div class="container">
-                    <h2 class="gallery-title" data-aos="fade-down">Pengalaman saya</h2>
-                    <div class="gallery-container" data-aos="fade-up">
-                        <div class="gallery-wrapper">
-                            <div class="experience-card">
-                                <h3 class="experience-title">membangun bot WhatsApp</h3>
-                                <p class="experience-date">2021 - Sekarang</p>
-                                <p class="experience-description">Dengan menggunakan node js dan libary baileys</p>
-                            </div>
-                            
-                            <div class="experience-card">
-                                <h3 class="experience-title">Membangun website marketplace</h3>
-                                <p class="experience-date">2023 - Sekarang</p>
-                                <p class="experience-description">Mengembangkan web menggunakan dan js,html,css.</p>
-                            </div>
-
-                            <div class="experience-card">
-                                <h3 class="experience-title">Membangun sebuah karakter ai desktop</h3>
-                                <p class="experience-date">2024 - Sekarang</p>
-                                <p class="experience-description">menggunakan bahasa python dan untuk 3d model menggunakan blender.</p>
-                            </div>
-
-                        </div>
-                    </div>
-                    <div class="gallery-nav">
-                        <button class="gallery-btn" onclick="slideGallery('prev')">← Previous</button>
-                        <button class="gallery-btn" onclick="slideGallery('next')">Next →</button>
-                    </div>
-                </div>
-            </section>
-            <div class="skills">
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="100">
-                    <span class="skill-icon">🌐</span>HTML
-                </div>
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="200">
-                    <span class="skill-icon">🎨</span>CSS
-                </div>
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="300">
-                    <span class="skill-icon">⚡</span>JavaScript
-                </div>
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="400">
-                    <span class="skill-icon">🐍</span>Python
-                </div>
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="500">
-                    <span class="skill-icon">📦</span>Node.js
-                </div>  
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="700">
-                    <span class="skill-icon">🐳</span>Docker
-                </div>
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="800">
-                    <span class="skill-icon">⚙️</span>C++
-                </div>
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="900">
-                    <span class="skill-icon">☕</span>Java
-                </div>
-                <div class="skill-item" data-aos="zoom-in" data-aos-delay="1000">
-                    <span class="skill-icon">🐘</span>PHP
-                </div>
-            </div>
-
-            <div class="music-player">
-                <div class="music-disc"></div>
-                <div class="music-info">
-                    <div class="music-title">Kamu & kenangan</div>
-                    <div class="music-artist">Maundy ayunda</div>
-                </div>
-                <div class="music-controls">
-                    <button class="music-btn" onclick="previousTrack()">⏮️</button>
-                    <button class="music-btn" id="playPauseBtn" onclick="togglePlay()">⏸️</button>
-                    <button class="music-btn" onclick="nextTrack()">⏭️</button>
-                </div>
-                <audio id="audio" src="http://filezone-cdn.caliph.dev/file/d7dd78b9c369f0dfbd91.mp4"></audio>
-            </div>
-
-            <div class="animated-bg">
-                <div class="animated-circle" style="width: 100px; height: 100px; top: 10%; left: 10%;"></div>
-                <div class="animated-circle" style="width: 150px; height: 150px; top: 50%; left: 70%;"></div>
-                <div class="animated-circle" style="width: 80px; height: 80px; top: 80%; left: 30%;"></div>
-            </div>
         
-            <div class="scroll-indicator">
-                <div class="scroll-progress"></div>
-            </div>
-        
-            <div class="floating-icon" style="top: 20%; left: 20%;">⚛️</div>
-            <div class="floating-icon" style="top: 40%; left: 80%;">🐍</div>
-            <div class="floating-icon" style="top: 70%; left: 40%;">🔧</div>
-
-            <div class="contact">
-                <a href="mailto:novaldzakwan68@gmail.com" class="contact-item" data-aos="fade-up" data-aos-delay="100">
-                    📧 novaldzakwan68@gmail.com
-                </a>
-                <a href="https://wa.me/6285840045596" class="whatsapp-btn" data-aos="fade-up" data-aos-delay="300">
-                    💬 WhatsApp
-                </a>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai-message">
+                <div class="message-bubble">
+                    Hi! I'm Clara, your AI assistant. How can I help you today? 👋
+                </div>
             </div>
         </div>
-    </section>
-    <script src="script.js"></script>
+
+        <div class="typing-indicator" id="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <div class="chat-input">
+            <input 
+                type="text" 
+                id="user-input" 
+                placeholder="Type your message here..." 
+                autocomplete="off"
+            >
+            <button onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+                Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            const particleCount = 20;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                particle.style.opacity = Math.random() * 0.5;
+                particles.appendChild(particle);
+            }
+        }
+
+        createParticles();
+
+        const messagesContainer = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        function createMessage(content, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            messageDiv.innerHTML = `
+                <div class="message-bubble">
+                    ${content}
+                </div>
+            `;
+            return messageDiv;
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Clear input and add user message
+            userInput.value = '';
+            messagesContainer.appendChild(createMessage(message, true));
+            scrollToBottom();
+
+            // Show typing indicator
+            typingIndicator.style.display = 'block';
+            scrollToBottom();
+
+            try {
+                const response = await axios.post('https://fastrestapis.fasturl.link/aillm/euryale', {
+                    model: "Sao10K/L3.1-70B-Euryale-v2.2",
+                    messages: [
+                        {
+                            role: "system",
+                            content: "kamu adalah clara"
+                        },
+                        {
+                            role: "user",
+                            content: message
+                        }
+                    ],
+                    max_tokens: 128,
+                    temperature: 0.9,
+                    presence_penalty: 0.1,
+                    frequency_penalty: 0.1,
+                    top_p: 0.9,
+                    top_k: 100
+                }, {
+                    headers: {
+                        'accept': 'application/json',
+                        'x-api-key': 'aef3f46d-5992-45cd-9f45-dc0a8f6f7548',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+
+                // Add AI response with animation
+                const aiResponse = response.data.results.choices[0].message.content;
+                const aiMessage = createMessage(aiResponse, false);
+                messagesContainer.appendChild(aiMessage);
+                scrollToBottom();
+
+                // Add success animation to the message
+                aiMessage.style.animation = 'success 0.5s ease';
+
+            } catch (error) {
+                console.error('Error:', error);
+                typingIndicator.style.display = 'none';
+                
+                // Add error message with shake animation
+                const errorMessage = createMessage('Sorry, I encountered an error. Please try again.', false);
+                errorMessage.style.animation = 'shake 0.5s ease';
+                messagesContainer.appendChild(errorMessage);
+                scrollToBottom();
+            }
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add loading animation when sending message
+        const sendButton = document.querySelector('.chat-input button');
+        sendButton.addEventListener('click', () => {
+            if (userInput.value.trim()) {
+                sendButton.style.opacity = '0.7';
+                setTimeout(() => {
+                    sendButton.style.opacity = '1';
+                }, 300);
+            }
+        });
+
+        // Send message on Enter key
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Add focus animation to input
+        userInput.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.01)';
+        });
+
+        userInput.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+
+        // Add hover effect to messages
+        messagesContainer.addEventListener('mouseover', function(e) {
+            if (e.target.classList.contains('message-bubble')) {
+                e.target.style.transform = 'scale(1.02)';
+                e.target.style.transition = 'transform 0.3s ease';
+            }
+        });
+
+        messagesContainer.addEventListener('mouseout', function(e) {
+            if (e.target.classList.contains('message-bubble')) {
+                e.target.style.transform = 'scale(1)';
+            }
+        });
+
+        // Recreate particles periodically
+        setInterval(() => {
+            const particles = document.getElementById('particles');
+            particles.innerHTML = '';
+            createParticles();
+        }, 10000);
+
+        // Focus input on load
+        userInput.focus();
+    </script>
 </body>
 </html>
